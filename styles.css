@@ -94,3 +94,12 @@ body{
 .proto{line-height:1.6; margin:0; padding-left:18px}
 .proto li{margin:7px 0}
 .proto b{font-weight:800}
+
+.redact{
+  display:inline-block;
+  padding:0 6px;
+  border-bottom:2px solid rgba(255,255,255,.35);
+  border-radius:6px;
+  color:transparent;
+  text-shadow: none;
+}

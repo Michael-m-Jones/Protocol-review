@@ -142,7 +142,7 @@ function renderMCQ(){
       <div class="h1">Which medication matches this protocol?</div>
       <div class="pill">${correct.population}</div>
       <div class="hr"></div>
-      <div class="bodytext">${correct.html ? correct.html : escapeHTML(correct.text)}</div>
+      <div class="bodytext">redactDrug((correct.html ? correct.html : escapeHTML(correct.text)), correct.drug)</div>
       <div class="muted" style="margin-top:8px">Choose one:</div>
       <div id="choices" class="stack" style="margin-top:10px"></div>
     </div>
@@ -306,6 +306,47 @@ function closeDrawer(){ $("#drawer").classList.add("hidden"); }
 function escapeHTML(s){
   return (s||"").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;");
 }
+
+function escapeRegExp(str){
+  return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function drugVariants(drug){
+  if(!drug) return [];
+  // Split "Name (Brand)" and also remove trailing descriptors like "Aerosolized Solution"
+  const variants = new Set();
+  const main = drug.split(" - ")[0].trim(); // defensive
+  const parenMatch = main.match(/^(.*?)\s*\((.*?)\)\s*$/);
+  if(parenMatch){
+    variants.add(parenMatch[1].trim());
+    variants.add(parenMatch[2].trim());
+  }else{
+    variants.add(main);
+  }
+  // Also include first token before commas or slashes
+  Array.from(variants).forEach(v=>{
+    v.split("/").forEach(p=>variants.add(p.trim()));
+    v.split(",").forEach(p=>variants.add(p.trim()));
+  });
+  // Remove very short variants and generic suffixes
+  const bad = ["solution","mdi","aerosolized","metered-dose","inhaler","adult","pediatric","als","lals","bls"];
+  return Array.from(variants)
+    .map(v=>v.replace(/\s+/g," ").trim())
+    .filter(v=>v.length >= 4)
+    .filter(v=>!bad.includes(v.toLowerCase()));
+}
+
+function redactDrug(html, drug){
+  let out = html || "";
+  const vars = drugVariants(drug);
+  vars.sort((a,b)=>b.length-a.length); // longest first to avoid partial overlap
+  vars.forEach(v=>{
+    const rx = new RegExp(`\\b${escapeRegExp(v)}\\b`, "gi");
+    out = out.replace(rx, '<span class="redact">_____</span>');
+  });
+  return out;
+}
+
 
 async function init(){
   // Load data
