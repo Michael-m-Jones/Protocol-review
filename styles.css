@@ -1,26 +1,13 @@
 
 :root{
-  --bg0:#05070D;
-  --bg1:#070A12;
-  --card: rgba(255,255,255,.06);
-  --card2: rgba(255,255,255,.035);
-  --border: rgba(255,255,255,.12);
-  --border2: rgba(255,255,255,.08);
-  --text:#EAF0FF;
-  --muted:#A7B0C3;
-  --shadow: 0 18px 60px rgba(0,0,0,.55);
-  --shadow2: 0 10px 30px rgba(0,0,0,.35);
-  --radius: 24px;
-  --radius2: 18px;
-
-  --cyan:#22d3ee;
-  --purple:#a78bfa;
-  --green:#34d399;
-  --amber:#fbbf24;
-  --rose:#fb7185;
-
-  --focus: rgba(34,211,238,.22);
-  --glass: rgba(5,7,13,.62);
+  --bg:#0b0f14;
+  --card:#121826;
+  --card2:#0f1420;
+  --text:#e7eefc;
+  --muted:#98a2b3;
+  --border:rgba(255,255,255,.09);
+  --shadow: 0 10px 30px rgba(0,0,0,.35);
+  --radius:18px;
 }
 *{box-sizing:border-box}
 body{
@@ -120,9 +107,31 @@ body{
 
 
 /* =========================
-   UI Revamp (modern + colorful)
+   UI Revamp (UI-only)
    ========================= */
-*{ -webkit-tap-highlight-color: transparent; }
+:root{
+  --bg0:#05070D;
+  --bg1:#070A12;
+  --card: rgba(255,255,255,.06);
+  --card2: rgba(255,255,255,.035);
+  --border: rgba(255,255,255,.12);
+  --border2: rgba(255,255,255,.08);
+  --text:#EAF0FF;
+  --muted:#A7B0C3;
+  --shadow: 0 18px 60px rgba(0,0,0,.55);
+  --shadow2: 0 10px 30px rgba(0,0,0,.35);
+  --radius: 24px;
+  --radius2: 18px;
+
+  --cyan:#22d3ee;
+  --purple:#a78bfa;
+  --green:#34d399;
+  --amber:#fbbf24;
+  --rose:#fb7185;
+
+  --focus: rgba(34,211,238,.22);
+  --glass: rgba(5,7,13,.62);
+}
 
 body{
   background:
@@ -135,8 +144,6 @@ body{
   letter-spacing: -0.01em;
 }
 
-.hidden{ display:none !important; }
-
 .header{
   position: sticky;
   top: 0;
@@ -144,6 +151,13 @@ body{
   backdrop-filter: blur(14px);
   background: var(--glass);
   border-bottom: 1px solid var(--border2);
+}
+
+.card{
+  background: linear-gradient(180deg, var(--card), var(--card2));
+  border: 1px solid var(--border2);
+  box-shadow: var(--shadow);
+  border-radius: var(--radius);
 }
 
 .logo{
@@ -154,41 +168,15 @@ body{
   box-shadow: var(--shadow2);
 }
 
-.h1{
-  font-weight: 900;
-  letter-spacing: -0.03em;
-}
-
-.subtle{ color: var(--muted); }
-
-.card{
-  background: linear-gradient(180deg, var(--card), var(--card2));
-  border: 1px solid var(--border2);
-  box-shadow: var(--shadow);
-  border-radius: var(--radius);
-}
-
-.card .title{
-  font-weight: 900;
-  letter-spacing: -0.03em;
-}
-
-.tabs{
-  gap: 10px;
-}
-
 .tab{
   border-radius: 999px;
   border: 1px solid rgba(255,255,255,.10);
   background: rgba(255,255,255,.03);
-  padding: 10px 14px;
   font-weight: 900;
   transition: transform .08s ease, background .2s ease, border-color .2s ease;
 }
-
 .tab:hover{ background: rgba(255,255,255,.06); }
 .tab:active{ transform: translateY(1px); }
-
 .tab.active{
   background: linear-gradient(135deg, rgba(34,211,238,.22), rgba(167,139,250,.18));
   border-color: rgba(34,211,238,.30);
@@ -201,15 +189,12 @@ body{
   font-weight: 900;
   transition: transform .08s ease, background .2s ease, border-color .2s ease;
 }
-
 .btn:hover{ background: rgba(255,255,255,.07); }
 .btn:active{ transform: translateY(1px); }
-
 .btn.primary{
   background: linear-gradient(135deg, rgba(34,211,238,.24), rgba(167,139,250,.18));
   border-color: rgba(34,211,238,.28);
 }
-
 .btn.danger{
   background: rgba(251,113,133,.14);
   border-color: rgba(251,113,133,.30);
@@ -222,7 +207,6 @@ body{
   color: var(--text);
   outline: none;
 }
-
 .input:focus, textarea:focus{
   border-color: rgba(34,211,238,.40);
   box-shadow: 0 0 0 4px var(--focus);
@@ -234,45 +218,17 @@ body{
   background: rgba(255,255,255,.03);
   transition: background .2s ease, border-color .2s ease, transform .08s ease;
 }
-
 .choice:hover{ background: rgba(255,255,255,.06); }
 .choice:active{ transform: translateY(1px); }
-
 .choice.correct{
   border-color: rgba(52,211,153,.35);
   background: rgba(52,211,153,.08);
 }
-
 .choice.wrong{
   border-color: rgba(251,113,133,.35);
   background: rgba(251,113,133,.08);
 }
 
-.proto{
-  line-height: 1.7;
-  padding-left: 18px;
-}
-.proto li{ margin: 8px 0; }
-
-.proto b{
-  font-weight: 950;
-  background: linear-gradient(135deg, rgba(34,211,238,.20), rgba(167,139,250,.16));
-  border: 1px solid rgba(255,255,255,.10);
-  padding: 1px 7px;
-  border-radius: 12px;
-  box-decoration-break: clone;
-  -webkit-box-decoration-break: clone;
-}
-
-.redact{
-  display:inline-block;
-  padding:0 10px;
-  border-bottom:2px solid rgba(255,255,255,.38);
-  border-radius:10px;
-  color:transparent;
-}
-
 @media (max-width: 640px){
   .card{ border-radius: 20px; }
-  .tab{ padding: 9px 12px; }
 }
