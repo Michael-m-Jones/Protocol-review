@@ -91,14 +91,6 @@ body{
 .table th, .table td{border-bottom:1px solid var(--border); padding:10px; text-align:left; font-size:13px; vertical-align:top}
 .footer{padding:14px 16px; border-top:1px solid var(--border); color:var(--muted); font-size:12px}
 
-/* Learning-friendly formatting */
-.proto{line-height:1.65; margin:0; padding-left:18px}
-.proto li{margin:8px 0}
+.proto{line-height:1.6; margin:0; padding-left:18px}
+.proto li{margin:7px 0}
 .proto b{font-weight:800}
-.proto i{color:rgba(255,255,255,.85)}
-
-/* Professional polish */
-.card{border:1px solid rgba(255,255,255,.10); box-shadow:0 18px 60px rgba(0,0,0,.45)}
-.btn,.tab{border-radius:999px; font-weight:700}
-.choice{border-radius:16px}
-.h1,.big{letter-spacing:-.02em}
