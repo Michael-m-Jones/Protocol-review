@@ -95,6 +95,26 @@ body{
 .proto li{margin:7px 0}
 .proto b{font-weight:800}
 
+.protoHdr{
+  font-weight: 950;
+  letter-spacing: -0.02em;
+  margin: 0 0 10px 0;
+  opacity: .95;
+}
+
+.medBlock{
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255,255,255,.08);
+}
+
+.medTitle{
+  font-weight: 900;
+  margin: 0 0 6px 0;
+  opacity: .98;
+}
+
+
 .redact{
   display:inline-block;
   padding:0 6px;
