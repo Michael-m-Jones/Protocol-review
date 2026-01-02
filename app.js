@@ -142,7 +142,7 @@ function renderMCQ(){
       <div class="h1">Which medication matches this protocol?</div>
       <div class="pill">${correct.population}</div>
       <div class="hr"></div>
-      <div class="bodytext">redactDrug((correct.html ? correct.html : escapeHTML(correct.text)), correct.drug)</div>
+      <div class="bodytext">${redactDrug((correct.html ? correct.html : escapeHTML(correct.text)), correct.drug)}</div>
       <div class="muted" style="margin-top:8px">Choose one:</div>
       <div id="choices" class="stack" style="margin-top:10px"></div>
     </div>
