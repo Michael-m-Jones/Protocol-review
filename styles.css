@@ -91,7 +91,16 @@ body{
 .table th, .table td{border-bottom:1px solid var(--border); padding:10px; text-align:left; font-size:13px; vertical-align:top}
 .footer{padding:14px 16px; border-top:1px solid var(--border); color:var(--muted); font-size:12px}
 
-
-.proto{line-height:1.55; margin:0; padding-left:18px}
-.proto li{margin:6px 0}
+/* --- Protocol formatting --- */
+.proto{line-height:1.6; margin:0; padding-left:18px}
+.proto li{margin:7px 0}
 .proto b{font-weight:800}
+
+/* --- UI polish --- */
+body{font-feature-settings:"ss01" 1,"cv02" 1}
+.card{border:1px solid rgba(255,255,255,.10); box-shadow: 0 14px 50px rgba(0,0,0,.45)}
+.big{letter-spacing:-.02em}
+.choice{border-radius:16px}
+.btn{border-radius:999px; font-weight:700}
+.tab{border-radius:999px; font-weight:700}
+input,textarea{border-radius:14px}

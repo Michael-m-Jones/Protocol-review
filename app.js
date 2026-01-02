@@ -80,7 +80,7 @@ function renderCards(){
   const isMissed = missedSet.has(id);
 
   const front = `<div class="big">${c.drug}</div><div class="pill">${c.population}</div>`;
-  const back = `<div class="bodytext">${escapeHTML(c.text)}</div><div class="muted" style="margin-top:8px">Source page: ${c.page}</div>`;
+  const back = `<div class="bodytext">${c.html ? c.html : escapeHTML(c.text)}</div><div class="muted" style="margin-top:8px">Source page: ${c.page}</div>`;
 
   const card = document.createElement("div");
   card.className = "card flashcard";
@@ -142,7 +142,7 @@ function renderMCQ(){
       <div class="h1">Which medication matches this protocol?</div>
       <div class="pill">${correct.population}</div>
       <div class="hr"></div>
-      <div class="bodytext">${escapeHTML(correct.text)}</div>
+      <div class="bodytext">${correct.html ? correct.html : escapeHTML(correct.text)}</div>
       <div class="muted" style="margin-top:8px">Choose one:</div>
       <div id="choices" class="stack" style="margin-top:10px"></div>
     </div>
@@ -207,7 +207,7 @@ function renderTyped(){
       <div id="reveal" class="hidden" style="margin-top:12px">
         <div class="hr"></div>
         <div class="muted">Protocol text:</div>
-        <div class="bodytext" style="margin-top:6px">${escapeHTML(c.text)}</div>
+        <div class="bodytext" style="margin-top:6px">${c.html ? c.html : escapeHTML(c.text)}</div>
         <div class="controls" style="margin-top:10px">
           <button id="btnIWasRight" class="btn">I was right</button>
           <button id="btnIMissed" class="btn danger">I missed it</button>
@@ -269,7 +269,7 @@ function renderCases(){
       </div>
       <div id="caseAnswer" class="hidden" style="margin-top:12px">
         <div class="hr"></div>
-        <div class="bodytext">${escapeHTML(c.text)}</div>
+        <div class="bodytext">${c.html ? c.html : escapeHTML(c.text)}</div>
         <div class="muted" style="margin-top:8px">Source page: ${c.page}</div>
       </div>
     </div>
