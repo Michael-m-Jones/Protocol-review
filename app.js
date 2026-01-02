@@ -10,6 +10,149 @@ const LS = {
   history: "proto_history_v1",
 };
 
+function fixPdfGlue(s) {
+  return (s || "")
+    // common missing spaces
+    .replace(/complexSVT/g, "complex SVT")
+    .replace(/Widecomplex/g, "Wide complex")
+    .replace(/DoseInhaler/g, "Dose Inhaler")
+    .replace(/Metered-DoseInhaler/g, "Metered-Dose Inhaler")
+    .replace(/AlbuterolMDI/g, "Albuterol MDI")
+    .replace(/Soluti\s+on/g, "Solution")
+    // "Mayrepe at" / "mayrepe at" -> "May repeat"
+    .replace(/Mayrepe\s*at/gi, "May repeat")
+    // tighten stray spaces
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function boldDoseTokens(s) {
+  // Bold numeric + unit only (keeps nearby phrase intact)
+  return (s || "").replace(
+    /(\d+(?:\.\d+)?\s*(?:mg|mcg|g|gm|mL|ml|cc|units|unit|IU|mEq)(?:\s*\/\s*kg)?)/gi,
+    "<b>$1</b>"
+  );
+}
+
+function formatProtocolHtml(rawHtml) {
+  if (!rawHtml) return "";
+
+  // If it's already a <ul class='proto'> we assume it's structured enough
+  if (rawHtml.includes("ul") && rawHtml.includes("proto")) return rawHtml;
+
+  // Parse text from incoming HTML (we'll re-bold doses after restructuring)
+  const tmp = document.createElement("div");
+  tmp.innerHTML = rawHtml;
+  let text = fixPdfGlue(tmp.textContent || "");
+
+  // Detect condition header (before first colon)
+  let header = "";
+  const colonIdx = text.indexOf(":");
+  if (colonIdx > 10 && colonIdx < 120) {
+    header = text.slice(0, colonIdx).trim();
+    text = text.slice(colonIdx + 1).trim();
+  }
+
+  // Find medication block start positions.
+  // Priority 1: explicit headers like "X - Adult" / "X - Pediatric"
+  const reHeader = /([A-Z][A-Za-z0-9/ ]+(?:\s*\([^)]+\))?(?:\s+[A-Z][A-Za-z0-9/ -]+?)*)\s*-\s*(Adult|Pediatric)\b/g;
+
+  // Fallback: repeated “Drug, <dose> …” patterns (ex: Adenosine, 6 mg…)
+  const reDrugDose = /\b([A-Z][A-Za-z]{3,}(?:\s*\([^)]+\))?)\s*,\s*(\d)/g;
+
+  const starts = [];
+  let m;
+
+  while ((m = reHeader.exec(text)) !== null) {
+    starts.push({ i: m.index, name: (m[1] + " - " + m[2]).trim(), kind: "header" });
+  }
+  if (starts.length === 0) {
+    while ((m = reDrugDose.exec(text)) !== null) {
+      starts.push({ i: m.index, name: m[1].trim(), kind: "dose" });
+    }
+  }
+
+  // If still nothing found, just bullet-split sentences
+  if (starts.length === 0) {
+    const bits = text
+      .split(/(?<=\.)\s+|;\s+/)
+      .map(s => s.trim())
+      .filter(Boolean)
+      .map(boldDoseTokens);
+
+    const list = bits.map(x => `<li>${x}</li>`).join("");
+    return `
+      <div class="protoBlock">
+        ${header ? `<div class="protoHdr">${escapeHTML(header)}</div>` : ""}
+        <ul class="proto">${list}</ul>
+      </div>
+    `;
+  }
+
+  // Build blocks by slicing between starts
+  starts.sort((a, b) => a.i - b.i);
+
+  const blocks = [];
+  for (let k = 0; k < starts.length; k++) {
+    const a = starts[k];
+    const b = starts[k + 1];
+    const chunk = text.slice(a.i, b ? b.i : text.length).trim();
+
+    // Extract a clean med title + body
+    let medTitle = a.name;
+    let body = chunk;
+
+    if (a.kind === "header") {
+      // chunk begins with "Title - Adult ..." — keep title, remove it from body
+      const cut = chunk.indexOf(a.name);
+      body = cut === 0 ? chunk.slice(a.name.length).trim() : chunk;
+    } else {
+      // for dose pattern, medTitle is drug name; remove leading "Drug," from body
+      body = chunk.replace(new RegExp("^" + medTitle.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "\\s*,\\s*", "i"), "").trim();
+    }
+
+    body = fixPdfGlue(body);
+
+    // Sub-bullet splitting: keep logic together
+    // - break on "If ..." and "May repeat ..." as nested bullets
+    // - break on sentence ends / semicolons
+    const parts = body
+      .split(/(?<=\.)\s+|;\s+|\s+\band\b\s+(?=[A-Z][a-z]{3,}\s*,\s*\d)/)
+      .map(s => s.trim())
+      .filter(Boolean);
+
+    // Merge tiny fragments into previous bullet (prevents “one thought split into two”)
+    const merged = [];
+    for (const p of parts) {
+      if (merged.length && (/^[a-z]/.test(p) || p.length < 18)) {
+        merged[merged.length - 1] = (merged[merged.length - 1] + " " + p).trim();
+      } else {
+        merged.push(p);
+      }
+    }
+
+    const sub = merged
+      .map(x => boldDoseTokens(x))
+      .map(x => `<li>${x}</li>`)
+      .join("");
+
+    blocks.push(`
+      <div class="medBlock">
+        <div class="medTitle">${escapeHTML(medTitle)}</div>
+        <ul class="proto">${sub}</ul>
+      </div>
+    `);
+  }
+
+  return `
+    <div class="protoBlock">
+      ${header ? `<div class="protoHdr">${escapeHTML(header)}</div>` : ""}
+      ${blocks.join("")}
+    </div>
+  `;
+}
+
+
 function nowISO(){ return new Date().toISOString(); }
 
 function loadJSON(key, fallback){
