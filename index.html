@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Protocol Review</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div id="app">
+    <header class="topbar">
+      <div class="brand">
+        <div class="logo">🩺</div>
+        <div>
+          <div class="title">Protocol Review</div>
+          <div class="subtitle">Flashcards • Quizzes • Typed recall • Cases</div>
+        </div>
+      </div>
+
+      <div class="top-actions">
+        <input id="searchInput" class="search" placeholder="Search drugs, route, dose, age band…" />
+        <div id="sessionProgress" class="progress-pill">Session: 0/0</div>
+        <button id="btnHistory" class="btn secondary">History</button>
+        <button id="btnMissed" class="btn secondary">Missed</button>
+        <button id="btnStartSession" class="btn">Start session</button>
+        <button id="btnReset" class="btn danger">Reset</button>
+      </div>
+    </header>
+
+    <main class="main">
+<!-- Main app -->
+      <section id="content">
+        <div class="layout">
+          <aside class="sidebar card">
+            <div class="sidebar-top">
+              <div class="h1">Drugs</div>
+              <div class="muted" style="font-size:12px">Tap to jump</div>
+            </div>
+            <div class="sidebar-controls">
+              <input id="drugFilter" class="input small" placeholder="Filter list…" />
+            </div>
+            <div id="drugList" class="drug-list"></div>
+          </aside>
+
+          <div class="content-area">
+            <div class="modebar">
+              <button class="tab active" data-mode="cards">Flashcards</button>
+              <button class="tab" data-mode="mcq">Multiple choice</button>
+              <button class="tab" data-mode="typed">Typed recall</button>
+              <button class="tab" data-mode="cases">Case prompts</button>
+            </div>
+
+            <section id="panel" class="panel"></section>
+          </div>
+        </div>
+      </section>
+</section>
+
+      <!-- Drawers -->
+      <section id="drawer" class="drawer hidden">
+        <div class="drawer-inner card">
+          <div class="drawer-top">
+            <h2 id="drawerTitle">History</h2>
+            <button id="btnCloseDrawer" class="btn secondary">Close</button>
+          </div>
+          <div id="drawerBody" class="drawer-body"></div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <div class="muted">Local progress is saved in this browser (history + missed).</div>
+    </footer>
+  </div>
+  <script src="app.js"></script>
+</body>
+</html>
