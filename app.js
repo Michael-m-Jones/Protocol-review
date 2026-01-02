@@ -1,12 +1,8 @@
-const BUILD_ID = "1767332543";
+const BUILD_ID = "1767331471";
 console.log("Protocol Review build", BUILD_ID);
 
 const $ = (sel) => document.querySelector(sel);
 const $$ = (sel) => Array.from(document.querySelectorAll(sel));
-
-// Simple client-side gate (plaintext password)
-const PASSWORD_PLAINTEXT = "studyme";
-
 
 const LS = {
   authed: "proto_authed_v1",
