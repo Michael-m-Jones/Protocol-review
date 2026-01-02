@@ -1,8 +1,12 @@
-const BUILD_ID = "1767331471";
+const BUILD_ID = "1767332910";
 console.log("Protocol Review build", BUILD_ID);
 
 const $ = (sel) => document.querySelector(sel);
 const $$ = (sel) => Array.from(document.querySelectorAll(sel));
+
+// Simple client-side gate (plaintext password)
+const PASSWORD_PLAINTEXT = "studyme";
+
 
 const LS = {
   authed: "proto_authed_v1",
@@ -351,7 +355,7 @@ function redactDrug(html, drug){
 }
 
 
-async function init(){
+async function initApp(){
   // Load data
   const res = await fetch("data/cards.json", {cache:"no-store"});
   ALL = (await res.json()).map(c => ({...c, id: normalize(c.drug)+"__"+normalize(c.population)}));
@@ -421,3 +425,37 @@ async function init(){
 }
 
 init();
+
+
+async function init(){
+  const gateEl = document.getElementById("gate");
+  const contentEl = document.getElementById("content");
+  const showApp = ()=>{ gateEl?.classList.add("hidden"); contentEl?.classList.remove("hidden"); };
+  const showGate = ()=>{ gateEl?.classList.remove("hidden"); contentEl?.classList.add("hidden"); };
+
+  const authed = sessionStorage.getItem("proto_authed") === "1";
+  if(authed){
+    showApp();
+    return initApp();
+  }
+
+  showGate();
+  const input = document.getElementById("pwInput");
+  const err = document.getElementById("gateErr");
+  const go = async ()=>{
+    const pw = (input?.value || "").trim().toLowerCase();
+    if(pw === PASSWORD_PLAINTEXT){
+      sessionStorage.setItem("proto_authed","1");
+      if(err) err.textContent = "";
+      showApp();
+      await initApp();
+    }else{
+      if(err) err.textContent = "Incorrect password.";
+    }
+  };
+
+  document.getElementById("btnEnter")?.addEventListener("click", go);
+  input?.addEventListener("keydown", (e)=>{ if(e.key==="Enter") go(); });
+  input?.focus();
+}
+
