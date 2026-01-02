@@ -90,3 +90,8 @@ body{
 .table{width:100%; border-collapse:collapse; overflow:hidden}
 .table th, .table td{border-bottom:1px solid var(--border); padding:10px; text-align:left; font-size:13px; vertical-align:top}
 .footer{padding:14px 16px; border-top:1px solid var(--border); color:var(--muted); font-size:12px}
+
+
+.proto{line-height:1.55; margin:0; padding-left:18px}
+.proto li{margin:6px 0}
+.proto b{font-weight:800}
