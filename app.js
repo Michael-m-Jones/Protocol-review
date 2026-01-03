@@ -10,20 +10,75 @@ const LS = {
   history: "proto_history_v1",
 };
 
+const _NO_JOIN = new Set([
+  "a","an","and","or","to","in","of","for","by","on","at","as","if","is","it","be","do","not","no","the",
+  "are","were","was","with","without","before","after","during","into","over","under","from","then","where"
+]);
+
+function rejoinSplitWords(s){
+  if(!s) return "";
+
+  // Work token-wise so we don't destroy spacing everywhere
+  let tokens = s.split(/(\s+)/); // keep spaces
+  let changed = true;
+
+  // Run a few passes; each pass can join one "gap" and expose the next
+  for(let pass=0; pass<4 && changed; pass++){
+    changed = false;
+
+    for(let i=0; i<tokens.length-2; i++){
+      const a = tokens[i];
+      const sep = tokens[i+1];
+      const b = tokens[i+2];
+
+      if(!/^\s+$/.test(sep)) continue;
+      if(!/^[A-Za-z]+$/.test(a) || !/^[A-Za-z]+$/.test(b)) continue;
+
+      const la = a.toLowerCase();
+      const lb = b.toLowerCase();
+
+      // Don't join common standalone words
+      if(_NO_JOIN.has(la) || _NO_JOIN.has(lb)) continue;
+
+      // Join if one side is very short (typical PDF fragment: "G luca gon", "imme diately")
+      // or if the right side is a suffix fragment ("as", "ed", "ing", etc.)
+      const suffix = new Set(["s","es","as","al","ly","ed","er","ers","ing","ion","ions","ment","ments"]);
+      const shouldJoin =
+        (a.length <= 2 || b.length <= 3) ||
+        suffix.has(lb);
+
+      if(shouldJoin){
+        tokens[i] = a + b;
+        tokens[i+1] = "";      // remove the space
+        tokens[i+2] = "";      // remove the next fragment (it’s merged)
+        changed = true;
+      }
+    }
+
+    // Clean out empty tokens created by merges
+    tokens = tokens.filter(t => t !== "");
+  }
+
+  return tokens.join("");
+}
+
+
 function fixPdfGlue(s) {
-  return (s || "")
-    // common missing spaces
+  s = rejoinSplitWords(s || "");   // <-- NEW (first pass)
+
+  s = (s || "")
     .replace(/complexSVT/g, "complex SVT")
     .replace(/Widecomplex/g, "Wide complex")
     .replace(/DoseInhaler/g, "Dose Inhaler")
     .replace(/Metered-DoseInhaler/g, "Metered-Dose Inhaler")
     .replace(/AlbuterolMDI/g, "Albuterol MDI")
     .replace(/Soluti\s+on/g, "Solution")
-    // "Mayrepe at" / "mayrepe at" -> "May repeat"
     .replace(/Mayrepe\s*at/gi, "May repeat")
-    // tighten stray spaces
     .replace(/\s+/g, " ")
     .trim();
+
+  s = rejoinSplitWords(s);         // <-- NEW (second pass; catches what normalization reveals)
+  return s;
 }
 
 function boldDoseTokens(s) {
@@ -462,9 +517,15 @@ function escapeRegExp(str){
 
 function drugVariants(drug){
   if(!drug) return [];
-  // Split "Name (Brand)" and also remove trailing descriptors like "Aerosolized Solution"
+
   const variants = new Set();
-  const main = drug.split(" - ")[0].trim(); // defensive
+
+  // Take only the name portion before " - Adult/Pediatric..."
+  // and normalize split-word artifacts (e.g., "G luca gon" -> "Glucagon")
+  const rawMain = (drug.split(" - ")[0] || "").trim();
+  const main = rejoinSplitWords(rawMain).replace(/\s+/g, " ").trim();
+
+  // Handle "Generic (Brand)" pattern
   const parenMatch = main.match(/^(.*?)\s*\((.*?)\)\s*$/);
   if(parenMatch){
     variants.add(parenMatch[1].trim());
@@ -472,29 +533,57 @@ function drugVariants(drug){
   }else{
     variants.add(main);
   }
-  // Also include first token before commas or slashes
+
+  // Expand variants by splitting on / and ,
   Array.from(variants).forEach(v=>{
     v.split("/").forEach(p=>variants.add(p.trim()));
     v.split(",").forEach(p=>variants.add(p.trim()));
   });
-  // Remove very short variants and generic suffixes
-  const bad = ["solution","mdi","aerosolized","metered-dose","inhaler","adult","pediatric","als","lals","bls"];
+
+  // Add "de-spaced" versions too, to match stems like "G luca gon"
+  // Example: "Gluca gon" -> also try "Glucagon"
+  Array.from(variants).forEach(v=>{
+    const fixed = rejoinSplitWords(v);
+    variants.add(fixed);
+    variants.add(fixed.replace(/\s+/g, "")); // extra aggressive match form
+  });
+
+  const bad = new Set([
+    "solution","mdi","aerosolized","metered-dose","inhaler",
+    "adult","pediatric","als","lals","bls"
+  ]);
+
   return Array.from(variants)
-    .map(v=>v.replace(/\s+/g," ").trim())
-    .filter(v=>v.length >= 4)
-    .filter(v=>!bad.includes(v.toLowerCase()));
+    .map(v => rejoinSplitWords(v).replace(/\s+/g," ").trim())
+    .filter(v => v.length >= 4)
+    .filter(v => !bad.has(v.toLowerCase()));
 }
 
 function redactDrug(html, drug){
   let out = html || "";
-  const vars = drugVariants(drug);
-  vars.sort((a,b)=>b.length-a.length); // longest first to avoid partial overlap
+
+  const vars = drugVariants(drug).sort((a,b)=>b.length-a.length); // longest first
+
   vars.forEach(v=>{
-    const rx = new RegExp(`\\b${escapeRegExp(v)}\\b`, "gi");
-    out = out.replace(rx, '<span class="redact">_____</span>');
+    if(!v) return;
+
+    // Normal word-boundary match
+    const rxWord = new RegExp(`\\b${escapeRegExp(v)}\\b`, "gi");
+    out = out.replace(rxWord, '<span class="redact">_____</span>');
+
+    // Also match split-letter versions in the stem:
+    // "Glucagon" should match "G luca gon"
+    // Turn "Glucagon" -> "G\\s*l\\s*u\\s*c\\s*a\\s*g\\s*o\\s*n"
+    const letters = v.replace(/\s+/g,"").split("").map(ch => escapeRegExp(ch)).join("\\s*");
+    if(letters.length >= 8){ // avoid being too broad on short words
+      const rxSplit = new RegExp(letters, "gi");
+      out = out.replace(rxSplit, '<span class="redact">_____</span>');
+    }
   });
+
   return out;
 }
+
 
 
 async function init(){
