@@ -252,3 +252,142 @@ body{
 @media (max-width: 640px){
   .card{ border-radius: 20px; }
 }
+
+/* =========================
+   Mobile polish (iPhone)
+   Paste at VERY BOTTOM of styles.css
+   ========================= */
+
+@media (max-width: 520px){
+
+  /* Give the page breathing room and avoid edge collisions */
+  body{
+    overflow-x: hidden;
+  }
+
+  /* Header: stack nicely instead of cramming */
+  .header{
+    padding: 12px 12px 10px 12px !important;
+  }
+
+  /* If your header uses a row layout, force wrap */
+  .header .row,
+  .header .top,
+  .header .bar{
+    flex-wrap: wrap !important;
+    gap: 10px !important;
+  }
+
+  /* Logo/title cluster */
+  .logo{
+    width: 34px !important;
+    height: 34px !important;
+    border-radius: 12px !important;
+  }
+
+  .h1{
+    font-size: 18px !important;
+    line-height: 1.1 !important;
+  }
+
+  /* Search should be full-width on mobile */
+  .search,
+  #search,
+  input[type="search"]{
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  /* Right-side buttons (History/Missed/Reset): wrap + smaller */
+  .header .actions,
+  .header .right,
+  .topActions{
+    width: 100% !important;
+    display: flex !important;
+    flex-wrap: wrap !important;
+    justify-content: flex-start !important;
+    gap: 8px !important;
+  }
+
+  .btn{
+    padding: 10px 12px !important;
+    font-size: 14px !important;
+  }
+
+  /* Tabs: allow wrap and reduce pill size */
+  .tabs{
+    flex-wrap: wrap !important;
+    gap: 8px !important;
+    margin-top: 10px !important;
+  }
+  .tab{
+    padding: 9px 12px !important;
+    font-size: 14px !important;
+  }
+
+  /* Main content padding */
+  .container,
+  .main,
+  .wrap{
+    padding: 12px !important;
+  }
+
+  /* Cards: full width, less heavy */
+  .card{
+    border-radius: 18px !important;
+    padding: 14px !important;
+  }
+
+  /* Card titles: don’t dominate the screen */
+  .card .title,
+  .title{
+    font-size: 22px !important;
+    line-height: 1.15 !important;
+  }
+
+  /* Age band pill / subheader spacing */
+  .pill,
+  .chip{
+    font-size: 13px !important;
+    padding: 6px 10px !important;
+  }
+
+  /* Button row inside card (Prev/Flip/Next/etc): wrap */
+  .card .controls,
+  .controls,
+  .navRow,
+  .btnRow{
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 8px !important;
+    justify-content: flex-start !important;
+  }
+
+  /* Make primary nav buttons easier to tap */
+  .controls .btn,
+  .navRow .btn{
+    flex: 1 1 auto !important;
+    min-width: 110px !important;
+  }
+
+  /* Progress chip (e.g., 1/38) shouldn’t force overflow */
+  .progress,
+  .counter{
+    flex: 0 0 auto !important;
+    min-width: 78px !important;
+    text-align: center !important;
+  }
+
+  /* Protocol text: improve readability */
+  .proto, .protoBlock{
+    font-size: 15px !important;
+    line-height: 1.65 !important;
+  }
+
+  /* Prevent long words/strings from causing horizontal overflow */
+  .proto, .protoBlock, .card, .header{
+    overflow-wrap: anywhere !important;
+    word-break: break-word !important;
+  }
+}
+
