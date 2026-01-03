@@ -15,15 +15,23 @@ const _NO_JOIN = new Set([
   "are","were","was","with","without","before","after","during","into","over","under","from","then","where"
 ]);
 
+const _NO_JOIN = new Set([
+  "a","an","and","or","to","in","of","for","by","on","at","as","if","is","it","be","do","not","no","the",
+  "are","were","was","with","without","before","after","during","into","over","under","from","then","where"
+]);
+
+const _SUFFIX = new Set(["s","es","as","al","ly","ed","er","ers","ing","ion","ions","ment","ments"]);
+
+// stopwords we *may* join when they look like split drug names (Glucag + on)
+const _MAY_JOIN_STOPWORD = new Set(["on","in","as","at","to","of"]);
+
 function rejoinSplitWords(s){
   if(!s) return "";
 
-  // Work token-wise so we don't destroy spacing everywhere
   let tokens = s.split(/(\s+)/); // keep spaces
   let changed = true;
 
-  // Run a few passes; each pass can join one "gap" and expose the next
-  for(let pass=0; pass<4 && changed; pass++){
+  for(let pass=0; pass<5 && changed; pass++){
     changed = false;
 
     for(let i=0; i<tokens.length-2; i++){
@@ -37,25 +45,32 @@ function rejoinSplitWords(s){
       const la = a.toLowerCase();
       const lb = b.toLowerCase();
 
-      // Don't join common standalone words
-      if(_NO_JOIN.has(la) || _NO_JOIN.has(lb)) continue;
+      const aIsCapLike = /^[A-Z]/.test(a);  // "Glucag"
+      const aLong = a.length >= 6;          // long-ish fragment
 
-      // Join if one side is very short (typical PDF fragment: "G luca gon", "imme diately")
-      // or if the right side is a suffix fragment ("as", "ed", "ing", etc.)
-      const suffix = new Set(["s","es","as","al","ly","ed","er","ers","ing","ion","ions","ment","ments"]);
+      // Default: don't join common standalone words
+      let block = _NO_JOIN.has(la) || _NO_JOIN.has(lb);
+
+      // BUT: allow joining stopwords (like "on") when it looks like split drug name
+      // Example: "Glucag on" => "Glucagon"
+      if(block && aIsCapLike && aLong && _MAY_JOIN_STOPWORD.has(lb) && b.length <= 2){
+        block = false;
+      }
+
+      if(block) continue;
+
       const shouldJoin =
         (a.length <= 2 || b.length <= 3) ||
-        suffix.has(lb);
+        _SUFFIX.has(lb);
 
       if(shouldJoin){
         tokens[i] = a + b;
-        tokens[i+1] = "";      // remove the space
-        tokens[i+2] = "";      // remove the next fragment (it’s merged)
+        tokens[i+1] = "";
+        tokens[i+2] = "";
         changed = true;
       }
     }
 
-    // Clean out empty tokens created by merges
     tokens = tokens.filter(t => t !== "");
   }
 
@@ -64,22 +79,33 @@ function rejoinSplitWords(s){
 
 
 function fixPdfGlue(s) {
-  s = rejoinSplitWords(s || "");   // <-- NEW (first pass)
+  s = rejoinSplitWords(s || "");
 
   s = (s || "")
+    // common missing spaces / glued tokens
     .replace(/complexSVT/g, "complex SVT")
     .replace(/Widecomplex/g, "Wide complex")
     .replace(/DoseInhaler/g, "Dose Inhaler")
     .replace(/Metered-DoseInhaler/g, "Metered-Dose Inhaler")
     .replace(/AlbuterolMDI/g, "Albuterol MDI")
     .replace(/Soluti\s+on/g, "Solution")
+
+    // repeat/admin glue
     .replace(/Mayrepe\s*at/gi, "May repeat")
+    .replace(/Mayadminister/gi, "May administer")
+    .replace(/administerone/gi, "administer one")
+
+    // route glue like establishIV, establishIO, etc.
+    .replace(/(\w)(IV|IO|IM|IN|PO|SL|PR)\b/g, "$1 $2")
+
     .replace(/\s+/g, " ")
     .trim();
 
-  s = rejoinSplitWords(s);         // <-- NEW (second pass; catches what normalization reveals)
+  // Run again AFTER normalization (this catches Glucag on -> Glucagon)
+  s = rejoinSplitWords(s);
   return s;
 }
+
 
 function boldDoseTokens(s) {
   // Bold numeric + unit only (keeps nearby phrase intact)
