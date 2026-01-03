@@ -10,10 +10,6 @@ const LS = {
   history: "proto_history_v1",
 };
 
-const _NO_JOIN = new Set([
-  "a","an","and","or","to","in","of","for","by","on","at","as","if","is","it","be","do","not","no","the",
-  "are","were","was","with","without","before","after","during","into","over","under","from","then","where"
-]);
 
 const _NO_JOIN = new Set([
   "a","an","and","or","to","in","of","for","by","on","at","as","if","is","it","be","do","not","no","the",
