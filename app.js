@@ -10,6 +10,61 @@ const LS = {
   history: "proto_history_v1",
 };
 
+function splitCardIntoMedsKeepAgeTogether(card){
+  // Prefer formatted HTML (so we can detect med blocks reliably)
+  const raw = card.html ? card.html : escapeHTML(card.text || "");
+  const formatted = formatProtocolHtml(raw);
+
+  // If no med blocks, keep as-is (but store formatted html for consistent rendering)
+  if(!formatted.includes('class="medBlock"')){
+    return [{ ...card, html: formatted }];
+  }
+
+  const tmp = document.createElement("div");
+  tmp.innerHTML = formatted;
+
+  const hdr = tmp.querySelector(".protoHdr")?.outerHTML || "";
+  const blocks = Array.from(tmp.querySelectorAll(".medBlock"));
+
+  // If only one medBlock, keep as-is
+  if(blocks.length <= 1){
+    return [{ ...card, html: formatted }];
+  }
+
+  // Split into one card per medTitle (Adult + Pediatric blocks collapse together)
+  const byTitle = new Map();
+
+  blocks.forEach((b) => {
+    const title = (b.querySelector(".medTitle")?.textContent || "").trim();
+    if(!title) return;
+
+    if(!byTitle.has(title)) byTitle.set(title, []);
+    byTitle.get(title).push(b.outerHTML);
+  });
+
+  const out = [];
+  let idx = 0;
+
+  for(const [title, htmlBlocks] of byTitle.entries()){
+    const html = `
+      <div class="protoBlock">
+        ${hdr}
+        ${htmlBlocks.join("")}
+      </div>
+    `;
+
+    out.push({
+      ...card,
+      drug: title,
+      title: title,
+      html,
+      id: (card.id || `${card.page || "p"}_${title}`) + "__m" + (idx++)
+    });
+  }
+
+  return out;
+}
+
 
 const _NO_JOIN = new Set([
   "a","an","and","or","to","in","of","for","by","on","at","as","if","is","it","be","do","not","no","the",
@@ -366,7 +421,7 @@ function renderMCQ(){
       <div class="h1">Which medication matches this protocol?</div>
       <div class="pill">${correct.population}</div>
       <div class="hr"></div>
-      <div class="bodytext">${redactDrug((correct.html ? correct.html : escapeHTML(correct.text)), correct.drug)}</div>
+      <div class="bodytext">${redactDrug(formatProtocolHtml(correct.html ? correct.html : escapeHTML(correct.text)), correct.drug)}</div>
       <div class="muted" style="margin-top:8px">Choose one:</div>
       <div id="choices" class="stack" style="margin-top:10px"></div>
     </div>
@@ -611,8 +666,15 @@ function redactDrug(html, drug){
 async function init(){
   // Load data
   const res = await fetch("data/cards.json", {cache:"no-store"});
-  ALL = (await res.json()).map(c => ({...c, id: normalize(c.drug)+"__"+normalize(c.population)}));
-  FILTERED = ALL.slice();
+  ALL = (await res.json())
+  .map(c => ({ ...c, id: normalize(c.drug)+"__"+normalize(c.population) }))
+  .flatMap(splitCardIntoMedsKeepAgeTogether);
+
+// IMPORTANT: after splitting, rebuild ids so they’re unique + consistent
+ALL = ALL.map(c => ({ ...c, id: makeId(c) }));
+
+FILTERED = ALL.slice();
+
 
   // Tabs
   $$(".tab").forEach(t=>{
