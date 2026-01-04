@@ -11,9 +11,21 @@ const LS = {
 };
 
 function splitCardIntoMedsKeepAgeTogether(card){
-  // Prefer formatted HTML (so we can detect med blocks reliably)
-  const raw = card.html ? card.html : escapeHTML(card.text || "");
-  const formatted = formatProtocolHtml(raw);
+  // Start from the best available payload
+  const rawHtml = card.html ? card.html : (card.text ? escapeHTML(card.text) : "");
+
+  // If it's a raw <div class="proto"> blob, extract its text and re-run formatting
+  const tmp0 = document.createElement("div");
+  tmp0.innerHTML = rawHtml;
+
+  let candidate = rawHtml;
+  const protoDiv = tmp0.querySelector(".proto");
+  if(protoDiv && protoDiv.tagName.toLowerCase() === "div"){
+    // Convert raw proto blob into plain text HTML so formatProtocolHtml can split it properly
+    candidate = escapeHTML(fixPdfGlue(protoDiv.textContent || ""));
+  }
+
+  const formatted = formatProtocolHtml(candidate);
 
   // If no med blocks, keep as-is (but store formatted html for consistent rendering)
   if(!formatted.includes('class="medBlock"')){
@@ -31,13 +43,11 @@ function splitCardIntoMedsKeepAgeTogether(card){
     return [{ ...card, html: formatted }];
   }
 
-  // Split into one card per medTitle (Adult + Pediatric blocks collapse together)
+  // Group blocks by medTitle (Adult + Pediatric stay together)
   const byTitle = new Map();
-
   blocks.forEach((b) => {
     const title = (b.querySelector(".medTitle")?.textContent || "").trim();
     if(!title) return;
-
     if(!byTitle.has(title)) byTitle.set(title, []);
     byTitle.get(title).push(b.outerHTML);
   });
@@ -64,6 +74,7 @@ function splitCardIntoMedsKeepAgeTogether(card){
 
   return out;
 }
+
 
 
 const _NO_JOIN = new Set([
@@ -169,8 +180,14 @@ function boldDoseTokens(s) {
 function formatProtocolHtml(rawHtml) {
   if (!rawHtml) return "";
 
-  // If it's already a <ul class='proto'> we assume it's structured enough
-  if (rawHtml.includes("ul") && rawHtml.includes("proto")) return rawHtml;
+  
+  // If it's already structured as a <ul class="proto"> inside a protoBlock, keep it.
+  // BUT if it's a raw <div class="proto"> blob, we still want to parse/split it.
+  if (rawHtml.includes('class="protoBlock"') && rawHtml.includes('class="proto"') && rawHtml.includes("<ul")) {
+  return rawHtml;
+}
+
+  
 
   // Parse text from incoming HTML (we'll re-bold doses after restructuring)
   const tmp = document.createElement("div");
